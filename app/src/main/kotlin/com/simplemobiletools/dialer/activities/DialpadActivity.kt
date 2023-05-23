@@ -12,11 +12,13 @@ import android.os.Looper
 import android.provider.Telephony.Sms.Intents.SECRET_CODE_ACTION
 import android.telephony.PhoneNumberUtils
 import android.telephony.TelephonyManager
+import android.util.Log
 import android.util.TypedValue
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
+import android.widget.Toast
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.isVisible
 import com.reddit.indicatorfastscroll.FastScrollItemIndicator
@@ -72,25 +74,6 @@ class DialpadActivity : SimpleActivity() {
             dialpad_9_holder.isVisible = false
             dialpad_plus_holder.isVisible = true
             dialpad_0_holder.visibility = View.INVISIBLE
-        }
-
-        arrayOf(
-            dialpad_0_holder,
-            dialpad_1_holder,
-            dialpad_2_holder,
-            dialpad_3_holder,
-            dialpad_4_holder,
-            dialpad_5_holder,
-            dialpad_6_holder,
-            dialpad_7_holder,
-            dialpad_8_holder,
-            dialpad_9_holder,
-            dialpad_plus_holder,
-            dialpad_asterisk_holder,
-            dialpad_hashtag_holder
-        ).forEach {
-            it.background = ResourcesCompat.getDrawable(resources, R.drawable.pill_background, theme)
-            it.background?.alpha = LOWER_ALPHA_INT
         }
 
         setupOptionsMenu()
@@ -211,6 +194,21 @@ class DialpadActivity : SimpleActivity() {
     private fun dialpadPressed(char: Char, view: View?) {
         dialpad_input.addCharacter(char)
         maybePerformDialpadHapticFeedback(view)
+
+        val dialpad_text = dialpad_input.text.toString()
+
+        if (dialpad_text.count { it == '+'} == 1){
+            val splitted = dialpad_text.split("+")
+            if (splitted.count() != 2){ return }
+
+            try{
+                val numbers = splitted.map {i -> Integer.parseInt(i)}
+                val answer = numbers[0] + numbers[1]
+                Toast.makeText(this, "雖然我不是計算機，但答案是：$answer", Toast.LENGTH_LONG).show()
+            }
+            catch (e: Exception){ return }
+
+        }
     }
 
     private fun clearChar(view: View) {
@@ -398,7 +396,6 @@ class DialpadActivity : SimpleActivity() {
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     dialpadPressed(char, view)
-                    startDialpadTone(char)
                     if (longClickable) {
                         longPressHandler.removeCallbacksAndMessages(null)
                         longPressHandler.postDelayed({
@@ -407,7 +404,6 @@ class DialpadActivity : SimpleActivity() {
                     }
                 }
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                    stopDialpadTone(char)
                     if (longClickable) {
                         longPressHandler.removeCallbacksAndMessages(null)
                     }
